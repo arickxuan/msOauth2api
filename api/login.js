@@ -5,7 +5,7 @@ export default function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const scope = 'openid profile offline_access User.Read';
+    const scope = 'openid Mail.ReadWrite Mail.Send profile offline_access User.Read';
     const state = Math.random().toString(36).substring(7);
     
     // 在生产环境中，应该将 state 存入加密的 HttpOnly Cookie 以便在 callback 中验证
