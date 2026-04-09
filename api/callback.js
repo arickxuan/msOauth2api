@@ -62,7 +62,7 @@ export default async function handler(req, res) {
         res.setHeader('Set-Cookie', cookies);
         
         // 重定向回首页
-        res.writeHead(302, { Location: '/' });
+        res.writeHead(302, { Location: '/ms.html' });
         res.end();
 
     } catch (err) {
