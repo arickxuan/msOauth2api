@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microsoft Entra ID Login Example</title>
+    <!-- 引入 MSAL Browser 库 -->
+    <script type="text/javascript" src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .hidden { display: none; }
+        button { padding: 10px 20px; cursor: pointer; }
+        pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Microsoft Entra ID OAuth2 示例</h1>
+    
+    <div id="login-section">
+        <button id="login-btn">登录并获取 Token</button>
+    </div>
+
+    <div id="user-info" class="hidden">
+        <h2>登录成功!</h2>
+        <p>用户: <span id="username"></span></p>
+        <p>Access Token:</p>
+        <pre id="access-token"></pre>
+        <button id="logout-btn">退出登录</button>
+    </div>
+
+    <script>
+        // ================= 配置区域 =================
+        const msalConfig = {
+            auth: {
+                clientId: "YOUR_CLIENT_ID_HERE", // 替换为你的客户端ID
+                authority: "https://login.microsoftonline.com/YOUR_TENANT_ID_HERE", // 替换为你的租户ID，或使用 'common'
+                redirectUri: "http://localhost:3000", // 必须与 Azure 门户中配置的完全一致
+            },
+            cache: {
+                cacheLocation: "sessionStorage", // 或 "localStorage"
+                storeAuthStateInCookie: false, 
+            }
+        };
+
+        // 请求的权限范围 (Scopes)
+        const loginRequest = {
+            scopes: ["User.Read"] // 例如读取用户基本信息
+        };
+
+        // ================= 初始化 MSAL =================
+        let myMSALObj;
+        let username = "";
+
+        try {
+            myMSALObj = new msal.PublicClientApplication(msalConfig);
+        } catch (error) {
+            console.error("MSAL 初始化失败:", error);
+            alert("MSAL 初始化失败，请检查配置和网络连接。");
+        }
+
+        // ================= 核心逻辑 =================
+
+        // 1. 登录函数
+        async function signIn() {
+            try {
+                // 使用 popup 方式登录（推荐，用户体验更好）
+                const loginResponse = await myMSALObj.loginPopup(loginRequest);
+                
+                handleResponse(loginResponse);
+            } catch (error) {
+                console.error("登录失败:", error);
+                alert("登录失败: " + error.message);
+            }
+        }
+
+        // 2. 处理登录响应
+        function handleResponse(response) {
+            if (response !== null) {
+                username = response.account.username;
+                showWelcomeMessage();
+                getTokenSilently(); // 获取 Access Token
+            }
+        }
+
+        // 3. 静默获取 Access Token (用于 API 调用)
+        async function getTokenSilently() {
+            const account = myMSALObj.getAccountByUsername(username);
+            if (!account) return;
+
+            const tokenRequest = {
+                scopes: ["User.Read"],
+                account: account
+            };
+
+            try {
+                // acquireTokenSilent 会先检查缓存，如果过期则自动刷新
+                const response = await myMSALObj.acquireTokenSilent(tokenRequest);
+                document.getElementById("access-token").textContent = response.accessToken;
+                console.log("Access Token:", response.accessToken);
+            } catch (error) {
+                console.warn("静默获取失败，尝试交互式获取:", error);
+                // 如果静默失败（例如用户未交互过），可能需要重新登录
+                try {
+                    const response = await myMSALObj.acquireTokenPopup(tokenRequest);
+                    document.getElementById("access-token").textContent = response.accessToken;
+                } catch (popupError) {
+                    console.error("交互式获取也失败:", popupError);
+                }
+            }
+        }
+
+        // 4. 退出登录
+        async function signOut() {
+            const logoutRequest = {
+                account: myMSALObj.getAccountByUsername(username),
+                postLogoutRedirectUri: window.location.origin,
+            };
+            await myMSALObj.logoutPopup(logoutRequest);
+            window.location.reload();
+        }
+
+        // ================= UI 辅助函数 =================
+        function showWelcomeMessage() {
+            document.getElementById("login-section").classList.add("hidden");
+            document.getElementById("user-info").classList.remove("hidden");
+            document.getElementById("username").textContent = username;
+        }
+
+        // ================= 事件绑定 =================
+        document.getElementById("login-btn").addEventListener("click", signIn);
+        document.getElementById("logout-btn").addEventListener("click", signOut);
+
+        // 页面加载时检查是否已登录
+        window.onload = async () => {
+            const accounts = myMSALObj.getAllAccounts();
+            if (accounts.length > 0) {
+                username = accounts[0].username;
+                showWelcomeMessage();
+                getTokenSilently();
+            }
+        };
+    </script>
+</body>
+</html>
