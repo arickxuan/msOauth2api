@@ -32,9 +32,9 @@
         // ================= 配置区域 =================
         const msalConfig = {
             auth: {
-                clientId: "YOUR_CLIENT_ID_HERE", // 替换为你的客户端ID
-                authority: "https://login.microsoftonline.com/YOUR_TENANT_ID_HERE", // 替换为你的租户ID，或使用 'common'
-                redirectUri: "http://localhost:3000", // 必须与 Azure 门户中配置的完全一致
+                clientId: "aa39615e-80ce-473d-ab57-325db827f220", // 替换为你的客户端ID
+                authority: "https://login.microsoftonline.com/369df44a-9ee0-4f09-bfde-271f8fd1b999", // 替换为你的租户ID，或使用 'common'
+                redirectUri: "http://localhost:5000/auth", // 必须与 Azure 门户中配置的完全一致
             },
             cache: {
                 cacheLocation: "sessionStorage", // 或 "localStorage"
@@ -44,7 +44,7 @@
 
         // 请求的权限范围 (Scopes)
         const loginRequest = {
-            scopes: ["User.Read"] // 例如读取用户基本信息
+            scopes: ["User.Read","https://graph.microsoft.com/Mail.ReadWrite","openid","profile","https://graph.microsoft.com/Mail.Send","https://graph.microsoft.com/User.ReadWrite.All offline_access"] // 例如读取用户基本信息
         };
 
         // ================= 初始化 MSAL =================
