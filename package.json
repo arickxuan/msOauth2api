@@ -10,6 +10,8 @@
     "vercel-dev": "vercel dev"
   },
   "dependencies": {
+    "cookie":"",
+    "axios":"",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
