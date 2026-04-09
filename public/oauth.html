@@ -34,7 +34,7 @@
             auth: {
                 clientId: "aa39615e-80ce-473d-ab57-325db827f220", // 替换为你的客户端ID
                 authority: "https://login.microsoftonline.com/common", // 替换为你的租户ID，或使用 'common'
-                redirectUri: "http://localhost:5000/auth", // 必须与 Azure 门户中配置的完全一致
+                redirectUri: "https://ms-mail-api.arick.top/oauth.html", // 必须与 Azure 门户中配置的完全一致
             },
             cache: {
                 cacheLocation: "sessionStorage", // 或 "localStorage"
@@ -44,7 +44,14 @@
 
         // 请求的权限范围 (Scopes)
         const loginRequest = {
-            scopes: ["User.Read","https://graph.microsoft.com/Mail.ReadWrite","openid","profile","https://graph.microsoft.com/Mail.Send","https://graph.microsoft.com/User.ReadWrite.All offline_access"] // 例如读取用户基本信息
+            scopes: [
+        "openid",                // OIDC 标准：获取 ID Token
+        "profile",               // OIDC 标准：获取用户基本信息
+        "offline_access",        // 重要：获取 Refresh Token，实现静默刷新
+        "User.Read",             // Microsoft Graph: 读取当前登录用户信息
+        "Mail.ReadWrite",        // Microsoft Graph: 读写当前用户的邮件
+        "Mail.Send"              // Microsoft Graph: 发送邮件
+    ]
         };
 
         // ================= 初始化 MSAL =================
