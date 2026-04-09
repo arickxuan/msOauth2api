@@ -25,6 +25,8 @@
         <p>用户: <span id="username"></span></p>
         <p>Access Token:</p>
         <pre id="access-token"></pre>
+        <p>refresh token:</p>
+        <pre id="refresh-token"></pre>
         <button id="logout-btn">退出登录</button>
     </div>
 
@@ -103,6 +105,7 @@
                 // acquireTokenSilent 会先检查缓存，如果过期则自动刷新
                 const response = await myMSALObj.acquireTokenSilent(tokenRequest);
                 document.getElementById("access-token").textContent = response.accessToken;
+                document.getElementById("refresh-token").textContent = response.refreshToken;
                 console.log("Access Token:", response.accessToken);
             } catch (error) {
                 console.warn("静默获取失败，尝试交互式获取:", error);
