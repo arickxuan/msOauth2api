@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Entra ID on Vercel</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .btn { padding: 10px 20px; background: #0078d4; color: white; border: none; cursor: pointer; text-decoration: none; display: inline-block; margin: 5px; }
+        #output { margin-top: 20px; padding: 10px; background: #f4f4f4; border: 1px solid #ddd; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Microsoft Entra ID on Vercel</h1>
+    
+    <div id="auth-section">
+        <!-- 指向 Vercel API 路由 -->
+        <a href="/api/login" class="btn">登录 Microsoft</a>
+    </div>
+
+    <div id="protected-section" style="display:none;">
+        <h2>受保护内容</h2>
+        <button onclick="fetchProfile()" class="btn">获取我的资料</button>
+        <button onclick="refreshToken()" class="btn">刷新 Token</button>
+        <div id="output"></div>
+    </div>
+
+    <script>
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/profile');
+                if (res.ok) {
+                    document.getElementById('auth-section').style.display = 'none';
+                    document.getElementById('protected-section').style.display = 'block';
+                    const data = await res.json();
+                    document.getElementById('output').textContent = '已登录: ' + JSON.stringify(data, null, 2);
+                }
+            } catch (e) { console.log('Not logged in'); }
+        }
+
+        async function fetchProfile() {
+            const output = document.getElementById('output');
+            output.textContent = 'Loading...';
+            try {
+                const res = await fetch('/api/profile');
+                if (res.status === 401) {
+                    output.textContent = 'Token 过期，请刷新';
+                    return;
+                }
+                const data = await res.json();
+                output.textContent = JSON.stringify(data, null, 2);
+            } catch (err) { output.textContent = 'Error: ' + err.message; }
+        }
+
+        async function refreshToken() {
+            const output = document.getElementById('output');
+            output.textContent = 'Refreshing...';
+            try {
+                const res = await fetch('/api/refresh', { method: 'POST' });
+                if (res.ok) {
+                    output.textContent = 'Token 刷新成功！';
+                    fetchProfile(); // 刷新后立即获取新数据
+                } else {
+                    output.textContent = '刷新失败';
+                }
+            } catch (err) { output.textContent = 'Error: ' + err.message; }
+        }
+
+        checkAuth();
+    </script>
+</body>
+</html>
