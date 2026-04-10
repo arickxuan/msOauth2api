@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microsoft Graph OAuth2 Demo</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; }
+        .card { border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1, h2 { color: #333; }
+        button { background-color: #0078d4; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; margin-right: 10px; margin-bottom: 10px; }
+        button:hover { background-color: #005a9e; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        button.secondary { background-color: #f3f2f1; color: #333; border: 1px solid #8a8886; }
+        button.secondary:hover { background-color: #edebe9; }
+        textarea { width: 100%; height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; font-size: 12px; margin-top: 10px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="email"] { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        .status { padding: 10px; border-radius: 4px; margin-bottom: 10px; display: none; }
+        .status.success { background-color: #dff6dd; color: #107c10; border: 1px solid #92c35e; }
+        .status.error { background-color: #fde7e9; color: #a80000; border: 1px solid #f1707b; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <h1>Microsoft Graph Mail Demo</h1>
+
+    <!-- 状态显示 -->
+    <div id="statusBox" class="status"></div>
+
+    <!-- 登录区域 -->
+    <div class="card" id="loginSection">
+        <h2>1. 登录 & 获取 Token</h2>
+        <p>点击登录按钮，将跳转到 Microsoft 进行授权。授权后将自动获取 Access Token 和 Refresh Token。</p>
+        <button onclick="handleLogin()">登录 Microsoft</button>
+        <button class="secondary" onclick="clearTokens()">清除本地 Token</button>
+    </div>
+
+    <!-- Token 信息展示 (调试用) -->
+    <div class="card hidden" id="tokenSection">
+        <h2>2. Token 信息</h2>
+        <label>Access Token (有效期短):</label>
+        <textarea id="accessTokenDisplay" readonly></textarea>
+        
+        <label>Refresh Token (长期有效):</label>
+        <textarea id="refreshTokenDisplay" readonly></textarea>
+        
+        <p><small>注意：Refresh Token 已存储在 localStorage 中。</small></p>
+        <button onclick="testRefreshToken()">测试刷新 Token</button>
+    </div>
+
+    <!-- 发送邮件区域 -->
+    <div class="card hidden" id="mailSection">
+        <h2>3. 发送邮件</h2>
+        <label>收件人邮箱:</label>
+        <input type="email" id="recipientEmail" placeholder="example@outlook.com" value="">
+        
+        <label>邮件主题:</label>
+        <input type="text" id="emailSubject" value="测试邮件来自 HTML Demo" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px;">
+        
+        <label>邮件内容:</label>
+        <textarea id="emailBody" style="height: 60px;">这是一封通过 Vercel API 发送的测试邮件。</textarea>
+        
+        <br><br>
+        <button onclick="sendEmail()">发送邮件</button>
+    </div>
+
+    <script>
+        // ⚠️ 请修改这里为你实际部署的 Vercel 域名
+        // 例如: const API_BASE = 'https://my-app.vercel.app';
+        const API_BASE = 'https://ms-mail-api.arick.top'; 
+
+        // 初始化检查
+        window.onload = function() {
+            checkUrlForCode();
+            loadTokensFromStorage();
+        };
+
+        // 1. 处理登录重定向
+        function handleLogin() {
+            window.location.href = `${API_BASE}/api/auth/login`;
+        }
+
+        // 2. 检查 URL 中是否有 Code (回调处理)
+        async function checkUrlForCode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const error = urlParams.get('error');
+
+            if (error) {
+                showStatus(`登录失败: ${error}`, 'error');
+                return;
+            }
+
+            if (code) {
+                showStatus('正在交换 Token...', 'success');
+                try {
+                    // 调用后端 Callback 接口交换 Token
+                    // 注意：这里假设后端 callback 接口允许跨域 (CORS)
+                    const response = await fetch(`${API_BASE}/api/auth/callback?code=${code}`);
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to exchange token');
+                    }
+
+                    const data = await response.json();
+                    
+                    // 保存 Token
+                    saveTokens(data.access_token, data.refresh_token);
+                    
+                    // 清理 URL 中的 code 参数，防止刷新页面重复提交
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    
+                    showStatus('登录成功！Token 已获取。', 'success');
+                    loadTokensFromStorage();
+                } catch (err) {
+                    console.error(err);
+                    showStatus('交换 Token 失败，请检查控制台日志。', 'error');
+                }
+            }
+        }
+
+        // 3. 保存 Token 到 LocalStorage
+        function saveTokens(accessToken, refreshToken) {
+            localStorage.setItem('ms_access_token', accessToken);
+            localStorage.setItem('ms_refresh_token', refreshToken);
+        }
+
+        // 4. 从 LocalStorage 加载并显示
+        function loadTokensFromStorage() {
+            const accessToken = localStorage.getItem('ms_access_token');
+            const refreshToken = localStorage.getItem('ms_refresh_token');
+
+            if (accessToken && refreshToken) {
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('tokenSection').classList.remove('hidden');
+                document.getElementById('mailSection').classList.remove('hidden');
+
+                document.getElementById('accessTokenDisplay').value = accessToken;
+                document.getElementById('refreshTokenDisplay').value = refreshToken;
+            } else {
+                document.getElementById('loginSection').classList.remove('hidden');
+                document.getElementById('tokenSection').classList.add('hidden');
+                document.getElementById('mailSection').classList.add('hidden');
+            }
+        }
+
+        // 5. 清除 Token
+        function clearTokens() {
+            localStorage.removeItem('ms_access_token');
+            localStorage.removeItem('ms_refresh_token');
+            location.reload();
+        }
+
+        // 6. 测试刷新 Token
+        async function testRefreshToken() {
+            const refreshToken = localStorage.getItem('ms_refresh_token');
+            if (!refreshToken) {
+                showStatus('没有 Refresh Token', 'error');
+                return;
+            }
+
+            showStatus('正在刷新 Token...', 'success');
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/refresh`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh_token: refreshToken })
+                });
+
+                if (!response.ok) throw new Error('Refresh failed');
+
+                const data = await response.json();
+                
+                // 更新存储
+                saveTokens(data.access_token, data.refresh_token);
+                loadTokensFromStorage();
+                
+                showStatus('Token 刷新成功！', 'success');
+            } catch (err) {
+                console.error(err);
+                showStatus('刷新 Token 失败', 'error');
+            }
+        }
+
+        // 7. 发送邮件
+        async function sendEmail() {
+            const accessToken = localStorage.getItem('ms_access_token');
+            const recipient = document.getElementById('recipientEmail').value;
+            const subject = document.getElementById('emailSubject').value;
+            const body = document.getElementById('emailBody').value;
+
+            if (!accessToken) {
+                showStatus('请先登录', 'error');
+                return;
+            }
+            if (!recipient) {
+                showStatus('请输入收件人邮箱', 'error');
+                return;
+            }
+
+            showStatus('正在发送邮件...', 'success');
+            try {
+                const response = await fetch(`${API_BASE}/api/graph/send-mail`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        subject: subject,
+                        bodyContent: body,
+                        toRecipients: [recipient]
+                    })
+                });
+
+                if (response.status === 200) {
+                    showStatus('邮件发送成功！', 'success');
+                } else {
+                    const errData = await response.json();
+                    throw new Error(errData.error || 'Send failed');
+                }
+            } catch (err) {
+                console.error(err);
+                showStatus(`发送失败: ${err.message}`, 'error');
+            }
+        }
+
+        // 辅助函数：显示状态消息
+        function showStatus(msg, type) {
+            const box = document.getElementById('statusBox');
+            box.textContent = msg;
+            box.className = `status ${type}`;
+            box.style.display = 'block';
+            
+            // 3秒后自动隐藏成功消息
+            if (type === 'success') {
+                setTimeout(() => {
+                    box.style.display = 'none';
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
