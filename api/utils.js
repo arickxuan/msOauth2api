@@ -3,15 +3,26 @@
 
 import crypto from 'crypto';
 
-export function generateCodeVerifier() {
-  // 生成随机字符串作为 verifier
+/**
+ * 生成 code_verifier
+ */
+function generateCodeVerifier() {
   return crypto.randomBytes(32).toString('base64url');
 }
 
-export async function generateCodeChallenge(verifier) {
-  // SHA256 哈希并转为 Base64Url 格式
+/**
+ * 生成 code_challenge
+ */
+async function generateCodeChallenge(verifier) {
   const hash = crypto.createHash('sha256').update(verifier).digest();
   return bufferToBase64Url(hash);
+}
+
+function bufferToBase64Url(buffer) {
+  return buffer.toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
 }
 
 function bufferToBase64Url(buffer) {
