@@ -1,6 +1,26 @@
 // api/utils.js
 // 微软 OAuth2 邮件 API 公共工具函数
 
+import crypto from 'crypto';
+
+export function generateCodeVerifier() {
+  // 生成随机字符串作为 verifier
+  return crypto.randomBytes(32).toString('base64url');
+}
+
+export async function generateCodeChallenge(verifier) {
+  // SHA256 哈希并转为 Base64Url 格式
+  const hash = crypto.createHash('sha256').update(verifier).digest();
+  return bufferToBase64Url(hash);
+}
+
+function bufferToBase64Url(buffer) {
+  return buffer.toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+}
+
 /**
  * 生成 IMAP XOAUTH2 认证字符串
  * @param {string} user - 用户邮箱地址
@@ -94,6 +114,8 @@ async function graph_api(refresh_token, client_id) {
 
 module.exports = {
     generateAuthString,
+    generateCodeVerifier,
+    generateCodeChallenge,
     get_access_token,
     graph_api
 };
