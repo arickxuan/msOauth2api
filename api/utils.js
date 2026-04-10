@@ -1,8 +1,8 @@
 // api/utils.js
 // 微软 OAuth2 邮件 API 公共工具函数
 
-import crypto from 'crypto';
-
+//import crypto from 'crypto';
+const crypto = require('crypto');
 /**
  * 生成 code_verifier
  */
