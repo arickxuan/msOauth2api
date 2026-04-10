@@ -1,6 +1,7 @@
 const { CLIENT_ID, REDIRECT_URI } = process.env;
 
-export default function handler(req, res) {
+module.exports = async function handler(req, res) {
+//export default function handler(req, res) {
     if (req.method !== 'GET') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
