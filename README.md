@@ -32,27 +32,35 @@
   
 
 ## token 获取
-步骤 1: Azure Portal 配置
-进入 [Azure Portal](https://portal.azure.com/) > Microsoft Entra ID > App registrations。
-创建新应用，选择 “Accounts in this organizational directory only”（或根据你的需求）。
-Authentication 设置：
-Platform: Mobile and desktop applications
-Redirect URIs: 添加你的 Vercel 回调地址，例如 https://your-app.vercel.app/auth.html
-✅ 勾选 “Allow public client flows”
-API Permissions：
-Add a permission > Microsoft Graph > Delegated permissions:
-Mail.Read
-Mail.ReadWrite
-Mail.Send
-offline_access （必须！用于获取 refresh token）
-openid, profile, email
-注意：不能使用 Application Permissions（如 Mail.Read.All），因为那是用于守护进程/后台服务，不适用于用户登录场景。
-点击 Grant admin consent（如果需要管理员预授权）
-记录：
-Application (client) ID
-Directory (tenant) ID  用 common  
-不需要 Client Secret
+步骤 : Azure Portal 配置
 
+1. 进入 [Azure Portal](https://portal.azure.com/) > Microsoft Entra ID > App registrations。
+
+2. 创建新应用，选择 “Accounts in this organizational directory only”（或根据你的需求）。
+Authentication 设置：
+
+- Platform: Mobile and desktop applications
+- Redirect URIs: 添加你的 Vercel 回调地址，例如 https://your-app.vercel.app/auth.html
+- ✅ 勾选 “Allow public client flows”
+
+
+3. API Permissions：
+  Add a permission > Microsoft Graph > Delegated permissions:
+- Mail.Read
+- Mail.ReadWrite
+- Mail.Send
+- offline_access （必须！用于获取 refresh token）
+- openid,
+- profile
+> 注意：不能使用 Application Permissions（如 Mail.Read.All），因为那是用于守护进程/后台服务，不适用于用户登录场景。
+点击 Grant admin consent（如果需要管理员预授权）
+
+4. 记录：
+- Application (client) ID
+- Directory (tenant) ID  用 common  
+- 不需要 Client Secret
+
+5. 使用
 访问 https://your-app.vercel.app/auth.html 进行登录即可
 
 https://your-app.vercel.app/mail.html  进行收发邮件
