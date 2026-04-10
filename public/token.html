@@ -202,7 +202,7 @@
 
             showStatus('正在发送邮件...', 'success');
             try {
-                const response = await fetch(`${API_BASE}/api/graph/send-mail`, {
+                const response = await fetch(`${API_BASE}/api/auth/send-mail`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
