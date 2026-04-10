@@ -1,7 +1,7 @@
 // pages/api/auth/login.js
-import { generateCodeVerifier, generateCodeChallenge } from '../utils.js';
+//import { generateCodeVerifier, generateCodeChallenge } from '../utils.js';
 
-//const { generateCodeVerifier, generateCodeChallenge } = require('../../../lib/pkce');
+const { generateCodeVerifier, generateCodeChallenge } = require('../utils');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
