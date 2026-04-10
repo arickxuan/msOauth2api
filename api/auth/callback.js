@@ -1,10 +1,16 @@
 // pages/api/auth/callback.js
-import cookie from 'cookie';
+const cookie = require('cookie');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // 添加 CORS 头 (如果前端在不同域名)
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   const { code, error, error_description } = req.query;
 
@@ -16,12 +22,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing authorization code' });
   }
 
-  // 1. 从 Cookie 获取 verifier
+  // 1. 获取 Verifier
   const cookies = cookie.parse(req.headers.cookie || '');
   const codeVerifier = cookies.code_verifier;
 
   if (!codeVerifier) {
-    return res.status(400).json({ error: 'Invalid session. Please login again.' });
+    return res.status(400).json({ error: 'Session expired or invalid. Please login again.' });
   }
 
   const clientId = process.env.CLIENT_ID;
@@ -49,7 +55,7 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('Token Exchange Failed:', errText);
+      console.error('Token Exchange Error:', errText);
       return res.status(500).json({ error: 'Failed to exchange token' });
     }
 
@@ -60,11 +66,10 @@ export default async function handler(req, res) {
       `code_verifier=; Path=/; HttpOnly; Secure; Max-Age=0; SameSite=Lax`
     ]);
 
-    // 4. 返回 Token (包含 Refresh Token)
-    // ⚠️ 生产建议：不要直接返回 JSON，而是存入 HttpOnly Cookie
+    // 4. 返回 Token
     return res.status(200).json({
       access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token, // 这里是你需要的 Refresh Token
+      refresh_token: tokens.refresh_token,
       expires_in: tokens.expires_in,
       token_type: tokens.token_type
     });
@@ -73,4 +78,4 @@ export default async function handler(req, res) {
     console.error(err);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
-}
+};
