@@ -1,6 +1,6 @@
 // pages/api/auth/callback.js
-//const cookie = require('cookie');
-import cookie from 'cookie';
+const cookie = require('cookie');
+//import cookie from 'cookie';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
