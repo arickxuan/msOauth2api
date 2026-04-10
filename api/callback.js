@@ -4,7 +4,8 @@ const cookie = require('cookie');
 const { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } = process.env;
 const TOKEN_ENDPOINT = `https://login.microsoftonline.com/common/oauth2/v2.0/token`;
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
+//export default async function handler(req, res) {
     if (req.method !== 'GET') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
