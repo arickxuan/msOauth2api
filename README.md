@@ -29,6 +29,34 @@
 5. **开始使用**：
    - 部署完成后，你可以通过访问 `https://your-vercel-app.vercel.app` 查看接口文档来进行使用。
    - **注意**：Vercel 的链接在国内可能无法访问，请使用自己的域名进行 CNAME 解析或使用 Cloudflare 进行代理。
+  
+
+## token 获取
+步骤 1: Azure Portal 配置
+进入 [Azure Portal](https://portal.azure.com/) > Microsoft Entra ID > App registrations。
+创建新应用，选择 “Accounts in this organizational directory only”（或根据你的需求）。
+Authentication 设置：
+Platform: Mobile and desktop applications
+Redirect URIs: 添加你的 Vercel 回调地址，例如 https://your-app.vercel.app/auth.html
+✅ 勾选 “Allow public client flows”
+API Permissions：
+Add a permission > Microsoft Graph > Delegated permissions:
+Mail.Read
+Mail.ReadWrite
+Mail.Send
+offline_access （必须！用于获取 refresh token）
+openid, profile, email
+注意：不能使用 Application Permissions（如 Mail.Read.All），因为那是用于守护进程/后台服务，不适用于用户登录场景。
+点击 Grant admin consent（如果需要管理员预授权）
+记录：
+Application (client) ID
+Directory (tenant) ID  用 common  
+不需要 Client Secret
+
+访问 https://your-app.vercel.app/auth.html 进行登录即可
+
+https://your-app.vercel.app/mail.html  进行收发邮件
+
 
 ## 📚 API 文档
 
