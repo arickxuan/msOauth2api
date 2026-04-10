@@ -11,6 +11,7 @@ module.exports = async function handler(req, res) {
   const clientId = process.env.CLIENT_ID;
   const tenantId = process.env.TENANT_ID;
   const redirectUri = process.env.REDIRECT_URI;
+  console.log(redirectUri);
 
   if (!clientId || !tenantId || !redirectUri) {
     console.error('Missing env vars:', { clientId: !!clientId, tenantId: !!tenantId, redirectUri: !!redirectUri });
