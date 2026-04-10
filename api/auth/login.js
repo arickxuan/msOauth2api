@@ -1,7 +1,9 @@
 // pages/api/auth/login.js
 import { generateCodeVerifier, generateCodeChallenge } from '../utils.js';
 
-export default async function handler(req, res) {
+//const { generateCodeVerifier, generateCodeChallenge } = require('../../../lib/pkce');
+
+module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -11,20 +13,20 @@ export default async function handler(req, res) {
   const redirectUri = process.env.REDIRECT_URI;
 
   if (!clientId || !tenantId || !redirectUri) {
-    return res.status(500).json({ error: 'Missing environment variables' });
+    console.error('Missing env vars:', { clientId: !!clientId, tenantId: !!tenantId, redirectUri: !!redirectUri });
+    return res.status(500).json({ error: 'Server configuration error' });
   }
 
   // 1. 生成 PKCE
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = await generateCodeChallenge(codeVerifier);
 
-  // 2. 存入 HttpOnly Cookie (有效期 5 分钟)
+  // 2. 设置 HttpOnly Cookie
   res.setHeader('Set-Cookie', [
     `code_verifier=${codeVerifier}; Path=/; HttpOnly; Secure; Max-Age=300; SameSite=Lax`
   ]);
 
   // 3. 构建授权 URL
-  // 注意：scope 包含 offline_access 以获取 Refresh Token
   const scope = encodeURIComponent('openid profile email Mail.Read Mail.ReadWrite Mail.Send offline_access');
   
   const authUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?` +
@@ -37,4 +39,4 @@ export default async function handler(req, res) {
     `response_mode=query`;
 
   res.redirect(authUrl);
-}
+};
